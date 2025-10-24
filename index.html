@@ -292,14 +292,14 @@
             color: #00ff9d;
         }
 
-        /* Fullscreen Overlay */
+        /* Fixed Fullscreen Overlay */
         .fullscreen-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.98);
             z-index: 10000;
             display: none;
             flex-direction: column;
@@ -311,11 +311,13 @@
 
         .fullscreen-header {
             padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             border-bottom: 1px solid #333;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+            z-index: 10001;
         }
 
         .fullscreen-title {
@@ -334,6 +336,22 @@
             background: white;
             margin: 0;
             padding: 0;
+            overflow: auto;
+            position: relative;
+        }
+
+        .fullscreen-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .fullscreen-div {
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            background: white;
+            color: #333;
             overflow: auto;
         }
 
@@ -499,6 +517,30 @@
         .ad-text {
             font-size: 12px;
             color: #888;
+        }
+
+        /* Code output styling */
+        .code-output {
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .console-line {
+            margin-bottom: 5px;
+        }
+
+        .console-error {
+            color: #ff6b6b;
+        }
+
+        .console-log {
+            color: #4ecdc4;
+        }
+
+        .console-warn {
+            color: #ffe66d;
         }
 
         /* Responsive Design */
@@ -950,6 +992,22 @@ print(f"Courses: {', '.join(student['courses'])}")</textarea>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const jsCodeEditor = document.getElementById('js-code');
+            const htmlEditor = document.getElementById('html-code');
+            const cssEditor = document.getElementById('css-code');
+            const webJsEditor = document.getElementById('web-js-code');
+            const pythonEditor = document.getElementById('python-code');
+            
+            const jsOutput = document.getElementById('js-output');
+            const jsConsoleOutput = document.getElementById('js-console-output');
+            const webPreview = document.getElementById('web-preview');
+            const pythonOutput = document.getElementById('python-output');
+            
+            const runBtn = document.getElementById('run-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            
             // Language selector
             const langBtns = document.querySelectorAll('.lang-btn');
             const codeSections = document.querySelectorAll('.code-section');
@@ -992,7 +1050,243 @@ print(f"Courses: {', '.join(student['courses'])}")</textarea>
                 });
             });
             
-            // Enhanced Preview Controls
+            // Initialize preview controls
+            initializePreviewControls('js-preview-container', 'js');
+            initializePreviewControls('web-preview-container', 'web');
+            initializePreviewControls('python-preview-container', 'python');
+            
+            // Run code functionality
+            runBtn.addEventListener('click', function() {
+                const activeLang = document.querySelector('.lang-btn.active').getAttribute('data-lang');
+                
+                switch(activeLang) {
+                    case 'js':
+                        runJavaScript();
+                        break;
+                    case 'web':
+                        runWebCode();
+                        break;
+                    case 'python':
+                        runPython();
+                        break;
+                }
+            });
+            
+            // Reset functionality
+            resetBtn.addEventListener('click', function() {
+                const activeLang = document.querySelector('.lang-btn.active').getAttribute('data-lang');
+                
+                switch(activeLang) {
+                    case 'js':
+                        jsOutput.innerHTML = '';
+                        jsConsoleOutput.innerHTML = '';
+                        break;
+                    case 'web':
+                        webPreview.srcdoc = '';
+                        break;
+                    case 'python':
+                        pythonOutput.innerHTML = '';
+                        break;
+                }
+            });
+            
+            // Example buttons
+            exampleBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const example = this.getAttribute('data-example');
+                    loadExample(example);
+                });
+            });
+            
+            // Function to run JavaScript code
+            function runJavaScript() {
+                // Clear previous output
+                jsOutput.innerHTML = '';
+                jsConsoleOutput.innerHTML = '';
+                
+                // Capture console.log, console.error, etc.
+                const originalConsoleLog = console.log;
+                const originalConsoleError = console.error;
+                const originalConsoleWarn = console.warn;
+                
+                console.log = function(...args) {
+                    originalConsoleLog.apply(console, args);
+                    const logLine = document.createElement('div');
+                    logLine.className = 'console-line console-log';
+                    logLine.textContent = args.join(' ');
+                    jsConsoleOutput.appendChild(logLine);
+                };
+                
+                console.error = function(...args) {
+                    originalConsoleError.apply(console, args);
+                    const errorLine = document.createElement('div');
+                    errorLine.className = 'console-line console-error';
+                    errorLine.textContent = args.join(' ');
+                    jsConsoleOutput.appendChild(errorLine);
+                };
+                
+                console.warn = function(...args) {
+                    originalConsoleWarn.apply(console, args);
+                    const warnLine = document.createElement('div');
+                    warnLine.className = 'console-line console-warn';
+                    warnLine.textContent = args.join(' ');
+                    jsConsoleOutput.appendChild(warnLine);
+                };
+                
+                // Try to execute the code
+                try {
+                    eval(jsCodeEditor.value);
+                } catch (error) {
+                    const errorLine = document.createElement('div');
+                    errorLine.className = 'console-line console-error';
+                    errorLine.textContent = `Error: ${error.message}`;
+                    jsConsoleOutput.appendChild(errorLine);
+                }
+                
+                // Restore original console methods
+                console.log = originalConsoleLog;
+                console.error = originalConsoleError;
+                console.warn = originalConsoleWarn;
+            }
+            
+            // Function to run web code (HTML/CSS/JS)
+            function runWebCode() {
+                const html = htmlEditor.value;
+                const css = `<style>${cssEditor.value}</style>`;
+                const js = `<script>${webJsEditor.value}<\/script>`;
+                
+                const fullHtml = html + css + js;
+                
+                // Update the iframe
+                webPreview.srcdoc = fullHtml;
+            }
+            
+            // Function to run Python code (simulated)
+            function runPython() {
+                const code = pythonEditor.value;
+                let output = '';
+                
+                // Simple Python simulation
+                const lines = code.split('\n');
+                
+                // Process each line
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    // Skip empty lines and comments
+                    if (!line || line.startsWith('#')) continue;
+                    
+                    // Handle print statements
+                    if (line.startsWith('print(') && line.endsWith(')')) {
+                        const content = line.substring(6, line.length - 1);
+                        
+                        // Remove quotes if present
+                        let printContent = content;
+                        if ((content.startsWith('"') && content.endsWith('"')) || 
+                            (content.startsWith("'") && content.endsWith("'"))) {
+                            printContent = content.substring(1, content.length - 1);
+                        }
+                        
+                        // Handle f-strings (very basic simulation)
+                        if (printContent.includes('{') && printContent.includes('}')) {
+                            // This is a very simplified f-string simulation
+                            // In a real implementation, you'd need a proper parser
+                            printContent = printContent.replace(/\{([^}]+)\}/g, (match, p1) => {
+                                // Try to evaluate the expression
+                                try {
+                                    return eval(p1.trim());
+                                } catch (e) {
+                                    return `[Error: ${e.message}]`;
+                                }
+                            });
+                        }
+                        
+                        output += printContent + '\n';
+                    }
+                    
+                    // Handle variable assignments (basic)
+                    if (line.includes('=')) {
+                        const parts = line.split('=');
+                        const varName = parts[0].trim();
+                        const value = parts[1].trim();
+                        
+                        // Store variables in a global object for simulation
+                        if (!window.pythonVars) window.pythonVars = {};
+                        
+                        // Try to evaluate the value
+                        try {
+                            window.pythonVars[varName] = eval(value);
+                        } catch (e) {
+                            window.pythonVars[varName] = value;
+                        }
+                    }
+                    
+                    // Handle for loops (very basic simulation)
+                    if (line.startsWith('for ') && line.includes(' in ')) {
+                        const parts = line.split(' ');
+                        const varName = parts[1];
+                        const listName = parts[3];
+                        
+                        // Get the list from our stored variables
+                        const list = window.pythonVars[listName];
+                        
+                        if (Array.isArray(list)) {
+                            // Find the indented block
+                            let j = i + 1;
+                            let block = '';
+                            let indentLevel = null;
+                            
+                            while (j < lines.length && lines[j].trim() && !lines[j].trim().startsWith('for ') && !lines[j].trim().startsWith('def ')) {
+                                if (indentLevel === null) {
+                                    indentLevel = lines[j].search(/\S/);
+                                }
+                                
+                                if (lines[j].search(/\S/) >= indentLevel) {
+                                    block += lines[j].substring(indentLevel) + '\n';
+                                    j++;
+                                } else {
+                                    break;
+                                }
+                            }
+                            
+                            // Execute the block for each item
+                            for (const item of list) {
+                                window.pythonVars[varName] = item;
+                                // Recursively process the block
+                                const blockLines = block.split('\n');
+                                for (const blockLine of blockLines) {
+                                    if (blockLine.trim()) {
+                                        // Replace the loop variable with its current value
+                                        const processedLine = blockLine.replace(new RegExp(varName, 'g'), `"${item}"`);
+                                        if (processedLine.startsWith('print(')) {
+                                            const content = processedLine.substring(6, processedLine.length - 1);
+                                            output += content + '\n';
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            i = j - 1; // Skip the processed block
+                        }
+                    }
+                    
+                    // Handle function definitions (very basic)
+                    if (line.startsWith('def ')) {
+                        // Skip function definitions in this simple simulation
+                        // Find the end of the function
+                        let j = i + 1;
+                        while (j < lines.length && lines[j].trim() && lines[j].search(/\S/) > 0) {
+                            j++;
+                        }
+                        i = j - 1;
+                    }
+                }
+                
+                // Display the output
+                pythonOutput.innerHTML = `<div class="code-output">${output}</div>`;
+            }
+            
+            // Function to initialize preview controls
             function initializePreviewControls(containerId, type) {
                 const previewContainer = document.getElementById(containerId);
                 const fullscreenBtn = previewContainer.querySelector('.fullscreen-btn');
@@ -1004,15 +1298,13 @@ print(f"Courses: {', '.join(student['courses'])}")</textarea>
                 
                 // Fullscreen functionality
                 fullscreenBtn.addEventListener('click', function() {
-                    const preview = previewContainer.querySelector('.preview');
-                    const consoleElement = previewContainer.querySelector('.console');
-                    
                     // Clear previous content
                     fullscreenContent.innerHTML = '';
                     
                     if (type === 'web') {
-                        // For iframe content - create fresh iframe with current content
+                        // For iframe content
                         const iframe = document.createElement('iframe');
+                        iframe.className = 'fullscreen-iframe';
                         iframe.style.width = '100%';
                         iframe.style.height = '100%';
                         iframe.style.border = 'none';
@@ -1033,323 +1325,71 @@ print(f"Courses: {', '.join(student['courses'])}")</textarea>
                     } else if (type === 'js') {
                         // For JavaScript output
                         const contentDiv = document.createElement('div');
-                        contentDiv.style.padding = '40px';
-                        contentDiv.style.minHeight = '100%';
-                        contentDiv.style.background = 'white';
-                        contentDiv.style.color = '#333';
+                        contentDiv.className = 'fullscreen-div';
                         
                         // Copy content
-                        contentDiv.innerHTML = preview.innerHTML;
-                        
-                        fullscreenContent.appendChild(contentDiv);
+                        contentDiv.innerHTML = jsOutput.innerHTML;
                         
                         // Add console if exists
-                        if (consoleElement) {
+                        const consoleElement = document.getElementById('js-console-output');
+                        if (consoleElement && consoleElement.innerHTML) {
                             const consoleDiv = document.createElement('div');
                             consoleDiv.style.background = '#1e1e1e';
                             consoleDiv.style.color = 'white';
                             consoleDiv.style.padding = '20px';
-                            consoleDiv.style.borderTop = '2px solid #444';
+                            consoleDiv.style.marginTop = '20px';
+                            consoleDiv.style.borderRadius = '5px';
                             consoleDiv.style.fontFamily = "'Courier New', monospace";
                             
-                            consoleDiv.innerHTML = `<div style="font-weight: bold; margin-bottom: 10px; color: #00ff9d;">Console Output</div>${consoleElement.querySelector('#js-console-output').innerHTML}`;
+                            consoleDiv.innerHTML = `<div style="font-weight: bold; margin-bottom: 10px; color: #00ff9d;">Console Output</div>${consoleElement.innerHTML}`;
                             
-                            fullscreenContent.appendChild(consoleDiv);
+                            contentDiv.appendChild(consoleDiv);
                         }
                         
+                        fullscreenContent.appendChild(contentDiv);
                         fullscreenTitle.textContent = 'JavaScript Output - Fullscreen Mode';
                     } else {
                         // For Python output
                         const contentDiv = document.createElement('div');
-                        contentDiv.style.padding = '40px';
-                        contentDiv.style.minHeight = '100%';
-                        contentDiv.style.background = 'white';
-                        contentDiv.style.color = '#333';
-                        contentDiv.style.fontFamily = "'Courier New', monospace";
-                        contentDiv.style.whiteSpace = 'pre-wrap';
-                        contentDiv.style.lineHeight = '1.4';
-                        
-                        // Copy content
-                        contentDiv.innerHTML = preview.innerHTML;
-                        
+                        contentDiv.className = 'fullscreen-div';
+                        contentDiv.innerHTML = pythonOutput.innerHTML;
                         fullscreenContent.appendChild(contentDiv);
                         fullscreenTitle.textContent = 'Python Output - Fullscreen Mode';
                     }
                     
+                    // Show the fullscreen overlay
                     fullscreenOverlay.classList.add('active');
-                    document.body.style.overflow = 'hidden';
+                });
+                
+                // New tab functionality
+                newtabBtn.addEventListener('click', function() {
+                    if (type === 'web') {
+                        // For web content, open in new tab
+                        const html = htmlEditor.value;
+                        const css = `<style>${cssEditor.value}</style>`;
+                        const js = `<script>${webJsEditor.value}<\/script>`;
+                        
+                        const fullHtml = `<!DOCTYPE html><html>${html}${css}${js}</html>`;
+                        const newWindow = window.open();
+                        newWindow.document.write(fullHtml);
+                        newWindow.document.close();
+                    } else {
+                        // For JS and Python, we can't easily open in new tab
+                        alert('This feature is only available for web content (HTML/CSS/JS)');
+                    }
                 });
                 
                 // Exit fullscreen
                 exitFullscreenBtn.addEventListener('click', function() {
                     fullscreenOverlay.classList.remove('active');
-                    document.body.style.overflow = 'auto';
-                });
-                
-                // New Tab functionality
-                newtabBtn.addEventListener('click', function() {
-                    const preview = previewContainer.querySelector('.preview');
-                    
-                    if (type === 'web') {
-                        // For iframe content - create new window with current content
-                        const html = htmlEditor.value;
-                        const css = `<style>${cssEditor.value}</style>`;
-                        const js = `<script>${webJsEditor.value}<\/script>`;
-                        
-                        const newWindow = window.open('', '_blank');
-                        newWindow.document.write(html + css + js);
-                        newWindow.document.close();
-                    } else if (type === 'js') {
-                        // For JavaScript output
-                        const newWindow = window.open('', '_blank');
-                        newWindow.document.write(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>JavaScript Output</title>
-                                <style>
-                                    body { 
-                                        font-family: Arial, sans-serif; 
-                                        padding: 40px; 
-                                        background: white; 
-                                        color: #333;
-                                        line-height: 1.6;
-                                    }
-                                    .console {
-                                        background: #1e1e1e;
-                                        color: white;
-                                        padding: 20px;
-                                        margin-top: 20px;
-                                        border-radius: 5px;
-                                        font-family: 'Courier New', monospace;
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                ${preview.innerHTML}
-                                <div class="console">
-                                    <strong style="color: #00ff9d;">Console Output:</strong>
-                                    <div>${previewContainer.querySelector('#js-console-output').innerHTML}</div>
-                                </div>
-                            </body>
-                            </html>
-                        `);
-                        newWindow.document.close();
-                    } else {
-                        // For Python output
-                        const newWindow = window.open('', '_blank');
-                        newWindow.document.write(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>Python Output</title>
-                                <style>
-                                    body { 
-                                        font-family: 'Courier New', monospace; 
-                                        padding: 40px; 
-                                        background: white; 
-                                        color: #333;
-                                        white-space: pre-wrap;
-                                        line-height: 1.4;
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                ${preview.innerHTML}
-                            </body>
-                            </html>
-                        `);
-                        newWindow.document.close();
-                    }
-                });
-                
-                // Handle escape key to exit fullscreen
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape' && fullscreenOverlay.classList.contains('active')) {
-                        fullscreenOverlay.classList.remove('active');
-                        document.body.style.overflow = 'auto';
-                    }
                 });
             }
             
-            // Initialize preview controls for all containers
-            initializePreviewControls('js-preview-container', 'js');
-            initializePreviewControls('web-preview-container', 'web');
-            initializePreviewControls('python-preview-container', 'python');
-            
-            // JavaScript Only Runner
-            const jsEditor = document.getElementById('js-code');
-            const jsOutput = document.getElementById('js-output');
-            const jsConsoleOutput = document.getElementById('js-console-output');
-            
-            // Override console.log for JavaScript section
-            const originalConsoleLog = console.log;
-            console.log = function(...args) {
-                originalConsoleLog.apply(console, args);
-                const message = args.map(arg => 
-                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-                ).join(' ');
-                
-                const logEntry = document.createElement('div');
-                logEntry.textContent = '> ' + message;
-                logEntry.style.marginBottom = '5px';
-                jsConsoleOutput.appendChild(logEntry);
-                jsConsoleOutput.scrollTop = jsConsoleOutput.scrollHeight;
-            };
-            
-            // HTML/CSS/JS Runner
-            const htmlEditor = document.getElementById('html-code');
-            const cssEditor = document.getElementById('css-code');
-            const webJsEditor = document.getElementById('web-js-code');
-            const webPreview = document.getElementById('web-preview');
-            
-            // Python Runner (simulated)
-            const pythonEditor = document.getElementById('python-code');
-            const pythonOutput = document.getElementById('python-output');
-            
-            // Run button
-            const runBtn = document.getElementById('run-btn');
-            runBtn.addEventListener('click', function() {
-                const activeLang = document.querySelector('.lang-btn.active').getAttribute('data-lang');
-                
-                if (activeLang === 'js') {
-                    runJavaScript();
-                } else if (activeLang === 'web') {
-                    runWebCode();
-                } else if (activeLang === 'python') {
-                    runPython();
-                }
-            });
-            
-            // Reset button
-            const resetBtn = document.getElementById('reset-btn');
-            resetBtn.addEventListener('click', function() {
-                const activeLang = document.querySelector('.lang-btn.active').getAttribute('data-lang');
-                
-                if (activeLang === 'js') {
-                    if (confirm('Are you sure you want to reset the JavaScript code?')) {
-                        jsEditor.value = '';
-                        jsOutput.innerHTML = '';
-                        jsConsoleOutput.innerHTML = '';
-                    }
-                } else if (activeLang === 'web') {
-                    if (confirm('Are you sure you want to reset all web code?')) {
-                        htmlEditor.value = '';
-                        cssEditor.value = '';
-                        webJsEditor.value = '';
-                        webPreview.srcdoc = '';
-                    }
-                } else if (activeLang === 'python') {
-                    if (confirm('Are you sure you want to reset the Python code?')) {
-                        pythonEditor.value = '';
-                        pythonOutput.innerHTML = '';
-                    }
-                }
-            });
-            
-            // Function to run JavaScript code
-            function runJavaScript() {
-                // Clear previous output
-                jsOutput.innerHTML = '';
-                jsConsoleOutput.innerHTML = '';
-                
-                try {
-                    // Execute the JavaScript code
-                    eval(jsEditor.value);
-                } catch (error) {
-                    console.log('Error: ' + error.message);
-                }
-            }
-            
-            // Function to run HTML/CSS/JS code
-            function runWebCode() {
-                const html = htmlEditor.value;
-                const css = `<style>${cssEditor.value}</style>`;
-                const js = `<script>${webJsEditor.value}<\/script>`;
-                
-                const previewDocument = webPreview.contentDocument || webPreview.contentWindow.document;
-                previewDocument.open();
-                previewDocument.write(html + css + js);
-                previewDocument.close();
-            }
-            
-            // Function to run Python code (simulated)
-            function runPython() {
-                // Clear previous output
-                pythonOutput.innerHTML = '';
-                
-                // Get Python code
-                const code = pythonEditor.value;
-                
-                // Simple Python interpreter simulation
-                try {
-                    // Split code into lines
-                    const lines = code.split('\n');
-                    let output = '';
-                    
-                    // Simple simulation of print statements
-                    for (let i = 0; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        
-                        // Skip empty lines and comments
-                        if (line === '' || line.startsWith('#')) continue;
-                        
-                        // Handle print statements
-                        if (line.startsWith('print(') && line.endsWith(')')) {
-                            const content = line.substring(6, line.length - 1);
-                            // Remove quotes if present
-                            let text = content;
-                            if ((content.startsWith('"') && content.endsWith('"')) || 
-                                (content.startsWith("'") && content.endsWith("'"))) {
-                                text = content.substring(1, content.length - 1);
-                            }
-                            // Handle f-strings and variables
-                            text = text.replace(/\{([^}]+)\}/g, '<strong>$1</strong>');
-                            output += text + '\n';
-                        }
-                        
-                        // Handle variable assignments (simple simulation)
-                        if (line.includes('=') && !line.includes('print')) {
-                            const parts = line.split('=');
-                            const varName = parts[0].trim();
-                            const value = parts[1].trim();
-                            
-                            // Simple list simulation
-                            if (value.startsWith('[') && value.endsWith(']')) {
-                                output += `<span style="color: #0066cc;">${varName}</span> = <span style="color: #663399;">${value}</span>\n`;
-                            } else if (!isNaN(value)) {
-                                output += `<span style="color: #0066cc;">${varName}</span> = <span style="color: #cc0000;">${value}</span>\n`;
-                            } else if (value.startsWith('{') && value.endsWith('}')) {
-                                output += `<span style="color: #0066cc;">${varName}</span> = <span style="color: #663399;">${value}</span>\n`;
-                            }
-                        }
-                        
-                        // Handle for loops (simple simulation)
-                        if (line.startsWith('for ')) {
-                            const parts = line.split(' ');
-                            const varName = parts[1];
-                            const listName = parts[3];
-                            output += `<span style="color: #008800;">Looping through ${listName}...</span>\n`;
-                        }
-                        
-                        // Handle function definitions
-                        if (line.startsWith('def ')) {
-                            const funcName = line.split(' ')[1].split('(')[0];
-                            output += `<span style="color: #aa00aa;">Function ${funcName} defined</span>\n`;
-                        }
-                    }
-                    
-                    pythonOutput.innerHTML = `<pre style="padding: 30px; font-family: 'Courier New', monospace; white-space: pre-wrap; line-height: 1.4; font-size: 14px;">${output}</pre>`;
-                } catch (error) {
-                    pythonOutput.innerHTML = `<pre style="color: red; padding: 30px; font-family: 'Courier New', monospace;">Error: ${error.message}</pre>`;
-                }
-            }
-            
-            // Example codes
-            const examples = {
-                'js-clock': {
-                    lang: 'js',
-                    code: `// Live Clock Example
+            // Function to load examples
+            function loadExample(exampleName) {
+                switch(exampleName) {
+                    case 'js-clock':
+                        jsCodeEditor.value = `// Digital Clock Example
 function updateClock() {
     const now = new Date();
     const timeString = now.toLocaleTimeString();
@@ -1357,101 +1397,80 @@ function updateClock() {
     
     document.getElementById('js-output').innerHTML = \`
         <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 10px;">
-            <h2 style="margin-bottom: 20px;">Live Clock</h2>
-            <div style="font-size: 3rem; font-weight: bold; margin: 20px 0;">\${timeString}</div>
-            <div style="font-size: 1.5rem; opacity: 0.9;">\${dateString}</div>
+            <h1 style="font-size: 3rem; margin-bottom: 10px; font-family: 'Courier New', monospace;">\${timeString}</h1>
+            <p style="font-size: 1.2rem;">\${dateString}</p>
         </div>
     \`;
 }
 
-// Update the clock every second
+// Update the clock immediately and then every second
 updateClock();
-setInterval(updateClock, 1000);`
-                },
-                'js-counter': {
-                    lang: 'js',
-                    code: `// Counter App Example
-let count = 0;
+setInterval(updateClock, 1000);
 
-function updateDisplay() {
-    document.getElementById('js-output').innerHTML = \`
-        <div style="text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-            <h2 style="color: #333; margin-bottom: 30px;">Interactive Counter</h2>
-            <div style="font-size: 4rem; font-weight: bold; color: #4a00e0; margin: 20px 0;" id="count-value">\${count}</div>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <button onclick="increment()" style="padding: 12px 24px; background: #00b09b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Increment +</button>
-                <button onclick="decrement()" style="padding: 12px 24px; background: #ff416c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Decrement -</button>
-                <button onclick="resetCounter()" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Reset</button>
-            </div>
-        </div>
-    \`;
-}
-
-function increment() {
-    count++;
-    document.getElementById('count-value').textContent = count;
-    console.log('Counter incremented to: ' + count);
-}
-
-function decrement() {
-    count--;
-    document.getElementById('count-value').textContent = count;
-    console.log('Counter decremented to: ' + count);
-}
-
-function resetCounter() {
-    count = 0;
-    document.getElementById('count-value').textContent = count;
-    console.log('Counter reset to 0');
-}
-
-updateDisplay();`
-                },
-                'web-calculator': {
-                    lang: 'web',
-                    html: `<!DOCTYPE html>
+console.log('Digital clock started!');`;
+                        runJavaScript();
+                        break;
+                        
+                    case 'web-calculator':
+                        htmlEditor.value = `<!DOCTYPE html>
 <html>
 <head>
     <title>Calculator</title>
 </head>
 <body>
-    <div style="max-width: 350px; margin: 50px auto; background: #2c3e50; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-        <h2 style="text-align: center; color: white; margin-bottom: 20px; font-size: 1.5rem;">Scientific Calculator</h2>
-        <input type="text" id="display" readonly style="width: 100%; padding: 20px; font-size: 1.8rem; margin-bottom: 20px; text-align: right; border: none; border-radius: 10px; background: #34495e; color: white;">
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-            <button onclick="clearDisplay()" style="padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer; grid-column: span 2;">C</button>
-            <button onclick="deleteLast()" style="padding: 15px; background: #f39c12; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">⌫</button>
-            <button onclick="appendToDisplay('/')" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">/</button>
-            <button onclick="appendToDisplay('*')" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">×</button>
-            <button onclick="appendToDisplay('7')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">7</button>
-            <button onclick="appendToDisplay('8')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">8</button>
-            <button onclick="appendToDisplay('9')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">9</button>
-            <button onclick="appendToDisplay('-')" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">-</button>
-            <button onclick="appendToDisplay('4')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">4</button>
-            <button onclick="appendToDisplay('5')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">5</button>
-            <button onclick="appendToDisplay('6')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">6</button>
-            <button onclick="appendToDisplay('+')" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">+</button>
-            <button onclick="appendToDisplay('1')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">1</button>
-            <button onclick="appendToDisplay('2')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">2</button>
-            <button onclick="appendToDisplay('3')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">3</button>
-            <button onclick="appendToDisplay('0')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer; grid-column: span 2;">0</button>
-            <button onclick="appendToDisplay('.')" style="padding: 15px; background: #34495e; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">.</button>
-            <button onclick="calculate()" style="padding: 15px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer;">=</button>
+    <div style="max-width: 300px; margin: 50px auto; padding: 20px; background: #f5f5f5; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        <input type="text" id="display" readonly style="width: 100%; padding: 15px; font-size: 1.5rem; text-align: right; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+            <button onclick="clearDisplay()" style="grid-column: span 2; padding: 15px; background: #ff6b6b; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">C</button>
+            <button onclick="deleteLast()" style="padding: 15px; background: #ffa500; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">⌫</button>
+            <button onclick="appendToDisplay('/')" style="padding: 15px; background: #4a00e0; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">/</button>
+            
+            <button onclick="appendToDisplay('7')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">7</button>
+            <button onclick="appendToDisplay('8')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">8</button>
+            <button onclick="appendToDisplay('9')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">9</button>
+            <button onclick="appendToDisplay('*')" style="padding: 15px; background: #4a00e0; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">×</button>
+            
+            <button onclick="appendToDisplay('4')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">4</button>
+            <button onclick="appendToDisplay('5')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">5</button>
+            <button onclick="appendToDisplay('6')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">6</button>
+            <button onclick="appendToDisplay('-')" style="padding: 15px; background: #4a00e0; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">-</button>
+            
+            <button onclick="appendToDisplay('1')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">1</button>
+            <button onclick="appendToDisplay('2')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">2</button>
+            <button onclick="appendToDisplay('3')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">3</button>
+            <button onclick="appendToDisplay('+')" style="padding: 15px; background: #4a00e0; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">+</button>
+            
+            <button onclick="appendToDisplay('0')" style="grid-column: span 2; padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">0</button>
+            <button onclick="appendToDisplay('.')" style="padding: 15px; background: #333; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">.</button>
+            <button onclick="calculate()" style="padding: 15px; background: #00b09b; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">=</button>
         </div>
     </div>
 </body>
-</html>`,
-                    css: `body {
+</html>`;
+                        cssEditor.value = `body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea, #764ba2);
     margin: 0;
     padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-}`,
-                    js: `let display = document.getElementById('display');
+}
+
+button {
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+button:active {
+    transform: translateY(0);
+}`;
+                        webJsEditor.value = `let display = document.getElementById('display');
 
 function appendToDisplay(value) {
     display.value += value;
@@ -1471,111 +1490,129 @@ function calculate() {
     } catch (error) {
         display.value = 'Error';
     }
-}`
-                },
-                'python-fibonacci': {
-                    lang: 'python',
-                    code: `# Fibonacci Sequence Example
-print("=== FIBONACCI SEQUENCE ===")
+}
+
+// Initialize display
+clearDisplay();`;
+                        runWebCode();
+                        break;
+                        
+                    case 'python-fibonacci':
+                        pythonEditor.value = `# Fibonacci Sequence Example
 def fibonacci(n):
-    if n <= 0:
-        return []
-    elif n == 1:
-        return [0]
-    elif n == 2:
-        return [0, 1]
-    else:
-        fib_sequence = [0, 1]
-        for i in range(2, n):
-            next_number = fib_sequence[i-1] + fib_sequence[i-2]
-            fib_sequence.append(next_number)
-        return fib_sequence
+    """Generate Fibonacci sequence up to n terms"""
+    sequence = []
+    a, b = 0, 1
+    for _ in range(n):
+        sequence.append(a)
+        a, b = b, a + b
+    return sequence
 
-# Generate Fibonacci sequences
-print("First 15 Fibonacci numbers:")
-fib_15 = fibonacci(15)
-print(fib_15)
+print("=== FIBONACCI SEQUENCE ===")
+print("First 15 numbers in Fibonacci sequence:")
+fib_sequence = fibonacci(15)
+for i, num in enumerate(fib_sequence):
+    print(f"F({i}) = {num}")
 
-print("\\nFirst 10 Fibonacci numbers:")
-fib_10 = fibonacci(10)
-print(fib_10)
+print("\\n=== GOLDEN RATIO APPROXIMATION ===")
+# Approximate the golden ratio
+if len(fib_sequence) > 2:
+    ratio = fib_sequence[-1] / fib_sequence[-2]
+    print(f"Approximation of golden ratio: {ratio}")
+    print(f"Actual golden ratio: {(1 + 5**0.5) / 2}")`;
+                        runPython();
+                        break;
+                        
+                    case 'js-counter':
+                        jsCodeEditor.value = `// Interactive Counter Example
+let count = 0;
 
-# Calculate golden ratio approximation
-if len(fib_15) > 1:
-    golden_ratio = fib_15[-1] / fib_15[-2]
-    print(f"\\nGolden Ratio Approximation: {golden_ratio:.8f}")
-    print("Actual Golden Ratio: 1.61803399")`
-                },
-                'python-guess': {
-                    lang: 'python',
-                    code: `# Number Guessing Game Simulation
+function updateCounter() {
+    document.getElementById('js-output').innerHTML = \`
+        <div style="text-align: center; padding: 40px;">
+            <h1 style="font-size: 4rem; color: #333; margin-bottom: 20px;">\${count}</h1>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="decrement()" style="padding: 12px 25px; background: #ff416c; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">-</button>
+                <button onclick="resetCounter()" style="padding: 12px 25px; background: #4a00e0; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">Reset</button>
+                <button onclick="increment()" style="padding: 12px 25px; background: #00b09b; color: white; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer;">+</button>
+            </div>
+            <p style="margin-top: 20px; color: #666;">Click the buttons to change the counter value</p>
+        </div>
+    \`;
+}
+
+function increment() {
+    count++;
+    updateCounter();
+    console.log(\`Counter increased to: \${count}\`);
+}
+
+function decrement() {
+    count--;
+    updateCounter();
+    console.log(\`Counter decreased to: \${count}\`);
+}
+
+function resetCounter() {
+    count = 0;
+    updateCounter();
+    console.log('Counter reset to 0');
+}
+
+// Initialize the counter
+updateCounter();
+console.log('Interactive counter initialized!');`;
+                        runJavaScript();
+                        break;
+                        
+                    case 'python-guess':
+                        pythonEditor.value = `# Number Guessing Game
 import random
 
 print("=== NUMBER GUESSING GAME ===")
 print("I'm thinking of a number between 1 and 100!")
 
-# Generate a random number
+# Generate random number
 secret_number = random.randint(1, 100)
 attempts = 0
 max_attempts = 7
 
 print(f"You have {max_attempts} attempts to guess the number.\\n")
 
-# Game simulation
-guesses = [25, 50, 75, 60, 55, 57, 56]  # Simulated guesses
-
-for guess in guesses:
-    attempts += 1
-    remaining = max_attempts - attempts
-    print(f"Attempt {attempts}: You guessed {guess}")
-    
-    if guess < secret_number:
-        print(f"  Too low! {remaining} attempts remaining.\\n")
-    elif guess > secret_number:
-        print(f"  Too high! {remaining} attempts remaining.\\n")
-    else:
-        print(f"  🎉 Congratulations! You guessed the number {secret_number} in {attempts} attempts!")
-        break
-
-if attempts == max_attempts and guess != secret_number:
-    print(f"  💔 Game Over! The number was {secret_number}.")
-    print("  Better luck next time!")`
-                }
-            };
-
-            // Example buttons
-            const exampleBtns = document.querySelectorAll('.example-btn');
-            exampleBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const example = this.getAttribute('data-example');
-                    const exampleData = examples[example];
-                    
-                    // Switch to the correct language
-                    langBtns.forEach(b => b.classList.remove('active'));
-                    document.querySelector(`[data-lang="${exampleData.lang}"]`).classList.add('active');
-                    
-                    codeSections.forEach(section => section.classList.add('hidden'));
-                    document.getElementById(`${exampleData.lang}-section`).classList.remove('hidden');
-                    
-                    // Load the example code
-                    if (exampleData.lang === 'js') {
-                        jsEditor.value = exampleData.code;
-                        runJavaScript();
-                    } else if (exampleData.lang === 'web') {
-                        htmlEditor.value = exampleData.html;
-                        cssEditor.value = exampleData.css;
-                        webJsEditor.value = exampleData.js;
-                        runWebCode();
-                    } else if (exampleData.lang === 'python') {
-                        pythonEditor.value = exampleData.code;
-                        runPython();
-                    }
-                });
-            });
+while attempts < max_attempts:
+    try:
+        guess = int(input("Enter your guess: "))
+        attempts += 1
+        
+        if guess < secret_number:
+            print("Too low! Try again.")
+        elif guess > secret_number:
+            print("Too high! Try again.")
+        else:
+            print(f"\\n🎉 Congratulations! You guessed the number in {attempts} attempts!")
+            break
             
-            // Run initial code
+        remaining = max_attempts - attempts
+        if remaining > 0:
+            print(f"You have {remaining} attempts remaining.\\n")
+            
+    except ValueError:
+        print("Please enter a valid number!\\n")
+        continue
+
+if attempts >= max_attempts and guess != secret_number:
+    print(f"\\n💔 Game Over! The number was {secret_number}.")
+
+print("\\nThanks for playing!")`;
+                        runPython();
+                        break;
+                }
+            }
+            
+            // Run initial code examples
             runJavaScript();
             runWebCode();
+            runPython();
         });
     </script>
 </body>
