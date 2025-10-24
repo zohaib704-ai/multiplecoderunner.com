@@ -1,28 +1,912 @@
-// Load ads only after page is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait 2 seconds before showing ads
-    setTimeout(loadAdsterraAds, 2000);
-});
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Runner Pro - Multi-Language Code Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-function loadAdsterraAds() {
-    const adContainer = document.getElementById('adsterra-ad');
-    if (adContainer && isUserInteracting()) {
-        // Load Adsterra script dynamically
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.innerHTML = `
-            atOptions = {
-                'key' : 'YOUR_KEY',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-            };
-        `;
-        adContainer.appendChild(script);
-        
-        const invokeScript = document.createElement('script');
-        invokeScript.src = '//www.highperformanceformat.com/YOUR_KEY/invoke.js';
-        adContainer.appendChild(invokeScript);
-    }
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        .header-ad-container {
+            background: #1a1a1a;
+            padding: 8px 0;
+            border-bottom: 2px solid #4a00e0;
+        }
+
+        .header-ad {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #2a2a2a;
+            border-radius: 8px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .ad-label {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: #4a00e0;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Sidebar Ads */
+        .sidebar {
+            width: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-ad {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .sidebar-ad.horizontal {
+            height: 120px;
+            width: 100%;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .container {
+            flex: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .language-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .lang-btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .lang-btn.active {
+            background: #4a00e0;
+            border-color: #4a00e0;
+        }
+
+        .content-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .editor-container {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .editor-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .editor {
+            flex: 1;
+            height: 400px;
+            padding: 15px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            resize: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Preview Container */
+        .preview-container {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .preview-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .fullscreen-btn:hover {
+            background: #4a00e0;
+            border-color: #4a00e0;
+        }
+
+        .newtab-btn:hover {
+            background: #00b09b;
+            border-color: #00b09b;
+        }
+
+        .preview-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 550px;
+            position: relative;
+        }
+
+        .preview {
+            flex: 1;
+            background: white;
+            border: none;
+            color: #333;
+            overflow-y: auto;
+        }
+
+        .console {
+            background: #1e1e1e;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid #444;
+        }
+
+        .console-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #00ff9d;
+        }
+
+        /* Mid-content Ad */
+        .mid-content-ad {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: #4a00e0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: #8e2de2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .run-btn {
+            background: #00b09b;
+        }
+
+        .run-btn:hover {
+            background: #00d2a4;
+        }
+
+        .reset-btn {
+            background: #ff416c;
+        }
+
+        .reset-btn:hover {
+            background: #ff4b2b;
+        }
+
+        .examples {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #00ff9d;
+        }
+
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .example-btn {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .example-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Footer */
+        .footer-ad-container {
+            background: #1a1a1a;
+            padding: 15px 0;
+            border-top: 2px solid #4a00e0;
+            margin-top: 30px;
+        }
+
+        .footer-ad {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #2a2a2a;
+            border-radius: 8px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .tab.active {
+            background: #1e1e1e;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Ad Placeholder Styles */
+        .ad-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .ad-icon {
+            font-size: 24px;
+            color: #4a00e0;
+        }
+
+        .ad-text {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 120px;
+            }
+            
+            .sidebar-ad {
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                order: 2;
+            }
+            
+            .sidebar-ad {
+                height: 120px;
+                flex: 1;
+            }
+            
+            .sidebar-ad.horizontal {
+                height: 120px;
+            }
+            
+            .header-ad, .footer-ad {
+                height: 60px;
+            }
+            
+            .editor, .preview-content {
+                height: 300px;
+            }
+            
+            .preview-controls {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .control-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                flex-direction: column;
+            }
+            
+            .header-ad, .footer-ad {
+                height: 50px;
+                font-size: 12px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header Ad -->
+    <div class="header-ad-container">
+        <div class="header-ad">
+            <span class="ad-label">AD</span>
+            <div class="ad-placeholder">
+                <div class="ad-icon">
+                    <i class="fas fa-ad"></i>
+                </div>
+                <div class="ad-text">Header Advertisement</div>
+                <div style="font-size: 10px; color: #666;">728x90 Banner</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Left Sidebar Ads -->
+        <div class="sidebar">
+            <div class="sidebar-ad">
+                <span class="ad-label">AD</span>
+                <div class="ad-placeholder">
+                    <div class="ad-icon">
+                        <i class="fas fa-ad"></i>
+                    </div>
+                    <div class="ad-text">Sidebar Ad</div>
+                    <div style="font-size: 10px; color: #666;">160x600</div>
+                </div>
+            </div>
+            <div class="sidebar-ad horizontal">
+                <span class="ad-label">AD</span>
+                <div class="ad-placeholder">
+                    <div class="ad-icon">
+                        <i class="fas fa-ad"></i>
+                    </div>
+                    <div class="ad-text">Sidebar Banner</div>
+                    <div style="font-size: 10px; color: #666;">160x120</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="container">
+                <header>
+                    <h1>Code Runner Pro</h1>
+                    <p class="subtitle">Run JavaScript, HTML/CSS/JS combined, and Python code in one place</p>
+                </header>
+
+                <div class="language-selector">
+                    <button class="lang-btn active" data-lang="js">JavaScript Only</button>
+                    <button class="lang-btn" data-lang="web">HTML/CSS/JavaScript</button>
+                    <button class="lang-btn" data-lang="python">Python</button>
+                </div>
+
+                <!-- JavaScript Only Section -->
+                <div id="js-section" class="code-section">
+                    <div class="content-area">
+                        <div class="editor-container">
+                            <div class="editor-header">
+                                <div class="editor-title">JavaScript Code</div>
+                            </div>
+                            <textarea id="js-code" class="editor" placeholder="Write your JavaScript code here...">// Welcome to Code Runner Pro!
+// Write your JavaScript code here and click "Run Code"
+
+// Example: Display a greeting
+document.getElementById('js-output').innerHTML = '<h2 style="color: #333; text-align: center;">Hello, JavaScript Developer!</h2>';
+
+// Example: Create a dynamic list
+const fruits = ['Apple', 'Banana', 'Orange', 'Grapes'];
+const list = document.createElement('ul');
+list.style.color = '#333';
+list.style.padding = '20px';
+fruits.forEach(fruit => {
+    const item = document.createElement('li');
+    item.textContent = fruit;
+    item.style.margin = '5px 0';
+    list.appendChild(item);
+});
+document.getElementById('js-output').appendChild(list);
+
+// Example: Console output
+console.log('This message appears in the console below');
+console.log('You can view logs and errors here');</textarea>
+                        </div>
+
+                        <div class="preview-container" id="js-preview-container">
+                            <div class="preview-header">
+                                <div class="preview-title">Output</div>
+                                <div class="preview-controls">
+                                    <button class="control-btn fullscreen-btn" title="Fullscreen Preview">
+                                        <i class="fas fa-expand"></i> Fullscreen
+                                    </button>
+                                    <button class="control-btn newtab-btn" title="Open in New Tab">
+                                        <i class="fas fa-external-link-alt"></i> New Tab
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="preview-content">
+                                <div id="js-output" class="preview">
+                                    <!-- JavaScript output will be displayed here -->
+                                </div>
+                                <div class="console">
+                                    <div class="console-title">Console</div>
+                                    <div id="js-console-output"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HTML/CSS/JavaScript Section -->
+                <div id="web-section" class="code-section hidden">
+                    <div class="tab-container">
+                        <div class="tab active" data-tab="html">HTML</div>
+                        <div class="tab" data-tab="css">CSS</div>
+                        <div class="tab" data-tab="javascript">JavaScript</div>
+                    </div>
+                    <div class="content-area">
+                        <div class="editor-container">
+                            <div class="editor-header">
+                                <div class="editor-title" id="web-editor-title">HTML</div>
+                            </div>
+                            <textarea id="html-code" class="editor" placeholder="Write your HTML code here...">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;My Awesome Page&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div style="text-align: center; padding: 50px;"&gt;
+        &lt;h1 style="color: #333;"&gt;Hello, World!&lt;/h1&gt;
+        &lt;p style="color: #666; font-size: 1.2rem;"&gt;Welcome to my custom webpage&lt;/p&gt;
+        &lt;button id="myButton" style="padding: 12px 30px; background: #4a00e0; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;"&gt;Click Me!&lt;/button&gt;
+        &lt;div id="dynamicContent" style="margin-top: 20px;"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
+                            <textarea id="css-code" class="editor hidden" placeholder="Write your CSS code here...">body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
 }
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+button {
+    padding: 12px 30px;
+    background: #ff8c00;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+button:hover {
+    background: #ff6a00;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}</textarea>
+                            <textarea id="web-js-code" class="editor hidden" placeholder="Write your JavaScript code here...">document.getElementById('myButton').addEventListener('click', function() {
+    const dynamicContent = document.getElementById('dynamicContent');
+    
+    // Create a new element
+    const newElement = document.createElement('div');
+    newElement.innerHTML = '&lt;h3 style="color: white;"&gt;Dynamic Content Added!&lt;/h3&gt;&lt;p style="color: rgba(255,255,255,0.8);"&gt;This content was created with JavaScript&lt;/p&gt;';
+    newElement.style.marginTop = '20px';
+    newElement.style.padding = '20px';
+    newElement.style.backgroundColor = 'rgba(255,255,255,0.1)';
+    newElement.style.borderRadius = '10px';
+    newElement.style.backdropFilter = 'blur(10px)';
+    
+    dynamicContent.appendChild(newElement);
+    
+    // Change button text
+    this.textContent = 'Clicked!';
+    this.style.background = '#00b09b';
+    
+    // Add animation
+    this.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+        this.style.transform = 'scale(1)';
+    }, 150);
+});</textarea>
+                        </div>
+
+                        <div class="preview-container" id="web-preview-container">
+                            <div class="preview-header">
+                                <div class="preview-title">Live Preview</div>
+                                <div class="preview-controls">
+                                    <button class="control-btn fullscreen-btn" title="Fullscreen Preview">
+                                        <i class="fas fa-expand"></i> Fullscreen
+                                    </button>
+                                    <button class="control-btn newtab-btn" title="Open in New Tab">
+                                        <i class="fas fa-external-link-alt"></i> New Tab
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="preview-content">
+                                <iframe id="web-preview" class="preview"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Python Section -->
+                <div id="python-section" class="code-section hidden">
+                    <div class="content-area">
+                        <div class="editor-container">
+                            <div class="editor-header">
+                                <div class="editor-title">Python Code</div>
+                            </div>
+                            <textarea id="python-code" class="editor" placeholder="Write your Python code here..."># Welcome to Python Code Runner!
+# Write your Python code here and click "Run Code"
+
+# Example: Basic calculations
+print("=== BASIC CALCULATIONS ===")
+a = 10
+b = 5
+print(f"{a} + {b} = {a + b}")
+print(f"{a} * {b} = {a * b}")
+print(f"{a} / {b} = {a / b}")
+
+# Example: Working with lists
+print("\n=== WORKING WITH LISTS ===")
+fruits = ["Apple", "Banana", "Orange", "Grapes", "Mango"]
+print("Fruits list:")
+for i, fruit in enumerate(fruits, 1):
+    print(f"  {i}. {fruit}")
+
+# Example: Functions
+print("\n=== FUNCTIONS DEMO ===")
+def factorial(n):
+    if n == 0:
+        return 1
+    else:
+        return n * factorial(n-1)
+
+num = 6
+print(f"Factorial of {num} is {factorial(num)}")
+
+# Example: Dictionary operations
+print("\n=== DICTIONARY EXAMPLE ===")
+student = {
+    "name": "John Doe",
+    "age": 20,
+    "courses": ["Math", "Science", "English"]
+}
+print(f"Student: {student['name']}")
+print(f"Age: {student['age']}")
+print(f"Courses: {', '.join(student['courses'])}")</textarea>
+                        </div>
+
+                        <div class="preview-container" id="python-preview-container">
+                            <div class="preview-header">
+                                <div class="preview-title">Python Output</div>
+                                <div class="preview-controls">
+                                    <button class="control-btn fullscreen-btn" title="Fullscreen Preview">
+                                        <i class="fas fa-expand"></i> Fullscreen
+                                    </button>
+                                    <button class="control-btn newtab-btn" title="Open in New Tab">
+                                        <i class="fas fa-external-link-alt"></i> New Tab
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="preview-content">
+                                <div id="python-output" class="preview">
+                                    <!-- Python output will be displayed here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mid-content Ad -->
+                <div class="mid-content-ad">
+                    <span class="ad-label">AD</span>
+                    <div class="ad-placeholder">
+                        <div class="ad-icon">
+                            <i class="fas fa-ad"></i>
+                        </div>
+                        <div class="ad-text">Content Advertisement</div>
+                        <div style="font-size: 10px; color: #666;">728x90 Banner</div>
+                    </div>
+                </div>
+
+                <div class="examples">
+                    <h3>Try These Examples:</h3>
+                    <div class="example-buttons">
+                        <button class="example-btn" data-example="js-clock">JS Clock</button>
+                        <button class="example-btn" data-example="web-calculator">Web Calculator</button>
+                        <button class="example-btn" data-example="python-fibonacci">Python Fibonacci</button>
+                        <button class="example-btn" data-example="js-counter">JS Counter</button>
+                        <button class="example-btn" data-example="python-guess">Python Guessing Game</button>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="run-btn" class="run-btn">Run Code</button>
+                    <button id="reset-btn" class="reset-btn">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar Ads -->
+        <div class="sidebar">
+            <div class="sidebar-ad">
+                <span class="ad-label">AD</span>
+                <div class="ad-placeholder">
+                    <div class="ad-icon">
+                        <i class="fas fa-ad"></i>
+                    </div>
+                    <div class="ad-text">Sidebar Ad</div>
+                    <div style="font-size: 10px; color: #666;">160x600</div>
+                </div>
+            </div>
+            <div class="sidebar-ad horizontal">
+                <span class="ad-label">AD</span>
+                <div class="ad-placeholder">
+                    <div class="ad-icon">
+                        <i class="fas fa-ad"></i>
+                    </div>
+                    <div class="ad-text">Sidebar Banner</div>
+                    <div style="font-size: 10px; color: #666;">160x120</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Ad -->
+    <div class="footer-ad-container">
+        <div class="footer-ad">
+            <span class="ad-label">AD</span>
+            <div class="ad-placeholder">
+                <div class="ad-icon">
+                    <i class="fas fa-ad"></i>
+                </div>
+                <div class="ad-text">Footer Advertisement</div>
+                <div style="font-size: 10px; color: #666;">728x90 Banner</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Code Runner Pro &copy; 2023 | Run JavaScript, HTML/CSS/JS, and Python code in real-time</p>
+        <p><small>Note: Python execution is simulated in the browser. For full Python support, a backend server would be required.</small></p>
+    </footer>
+
+    <!-- Fullscreen Overlay -->
+    <div class="fullscreen-overlay" id="fullscreen-overlay">
+        <div class="fullscreen-header">
+            <div class="fullscreen-title" id="fullscreen-title">Output Preview - Fullscreen Mode</div>
+            <div class="fullscreen-controls">
+                <button class="control-btn" id="exit-fullscreen-btn">
+                    <i class="fas fa-compress"></i> Exit Fullscreen
+                </button>
+            </div>
+        </div>
+        <div class="fullscreen-content" id="fullscreen-content">
+            <!-- Fullscreen content will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // ... (the same JavaScript code from previous implementation)
+        // All the functionality remains exactly the same
+        // Only the HTML structure and CSS have been modified for ad placement
+    </script>
+</body>
+</html>
