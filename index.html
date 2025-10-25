@@ -294,6 +294,69 @@
             color: var(--accent);
         }
 
+        /* Fixed Fullscreen Overlay */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .fullscreen-header {
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10001;
+        }
+
+        .fullscreen-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .fullscreen-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .fullscreen-content {
+            flex: 1;
+            background: white;
+            margin: 0;
+            padding: 0;
+            overflow: auto;
+            position: relative;
+        }
+
+        .fullscreen-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .fullscreen-div {
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            background: white;
+            color: #333;
+            overflow: auto;
+        }
+
         /* Mid-content Ad */
         .mid-content-ad {
             background: rgba(255, 255, 255, 0.05);
@@ -915,6 +978,21 @@ print(f"Courses: {', '.join(student['courses'])}")</textarea>
         <p><small>Note: Python execution is simulated in the browser. For full Python support, a backend server would be required.</small></p>
     </footer>
 
+    <!-- Fullscreen Overlay -->
+    <div class="fullscreen-overlay" id="fullscreen-overlay">
+        <div class="fullscreen-header">
+            <div class="fullscreen-title" id="fullscreen-title">Output Preview - Fullscreen Mode</div>
+            <div class="fullscreen-controls">
+                <button class="control-btn" id="exit-fullscreen-btn">
+                    <i class="fas fa-compress"></i> Exit Fullscreen
+                </button>
+            </div>
+        </div>
+        <div class="fullscreen-content" id="fullscreen-content">
+            <!-- Fullscreen content will be inserted here -->
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Get DOM elements
@@ -974,6 +1052,11 @@ print(f"Courses: {', '.join(student['courses'])}")</textarea>
                     webEditorTitle.innerHTML = `<i class="fab fa-${tabName === 'javascript' ? 'js' : tabName}"></i> ${tabName.toUpperCase()}`;
                 });
             });
+            
+            // Initialize preview controls for all sections
+            initializePreviewControls('js-preview-container', 'js');
+            initializePreviewControls('web-preview-container', 'web');
+            initializePreviewControls('python-preview-container', 'python');
             
             // Run code functionality
             runBtn.addEventListener('click', function() {
@@ -1274,6 +1357,155 @@ if len(fib_sequence) > 2:
             runWebCode();
             runPython();
         });
+
+        // Initialize preview controls function
+        function initializePreviewControls(containerId, type) {
+            const previewContainer = document.getElementById(containerId);
+            const fullscreenBtn = previewContainer.querySelector('.fullscreen-btn');
+            const newtabBtn = previewContainer.querySelector('.newtab-btn');
+            const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+            const fullscreenContent = document.getElementById('fullscreen-content');
+            const fullscreenTitle = document.getElementById('fullscreen-title');
+            const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
+
+            // Fullscreen functionality
+            fullscreenBtn.addEventListener('click', function() {
+                // Clear previous content
+                fullscreenContent.innerHTML = '';
+                
+                if (type === 'web') {
+                    // For iframe content
+                    const iframe = document.createElement('iframe');
+                    iframe.className = 'fullscreen-iframe';
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    
+                    // Get current HTML, CSS, and JS content
+                    const html = document.getElementById('html-code').value;
+                    const css = `<style>${document.getElementById('css-code').value}</style>`;
+                    const js = `<script>${document.getElementById('web-js-code').value}<\/script>`;
+                    
+                    // Write the combined content to the iframe
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    iframeDoc.open();
+                    iframeDoc.write(html + css + js);
+                    iframeDoc.close();
+                    
+                    fullscreenContent.appendChild(iframe);
+                    fullscreenTitle.textContent = 'Web Preview - Fullscreen Mode';
+                } else if (type === 'js') {
+                    // For JavaScript output
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'fullscreen-div';
+                    
+                    // Copy content from js-output
+                    const jsOutput = document.getElementById('js-output');
+                    contentDiv.innerHTML = jsOutput.innerHTML;
+                    
+                    // Add console if exists
+                    const consoleElement = document.getElementById('js-console-output');
+                    if (consoleElement && consoleElement.innerHTML) {
+                        const consoleDiv = document.createElement('div');
+                        consoleDiv.style.background = '#1e1e1e';
+                        consoleDiv.style.color = 'white';
+                        consoleDiv.style.padding = '20px';
+                        consoleDiv.style.marginTop = '20px';
+                        consoleDiv.style.borderRadius = '5px';
+                        consoleDiv.style.fontFamily = "'Courier New', monospace";
+                        
+                        consoleDiv.innerHTML = `<div style="font-weight: bold; margin-bottom: 10px; color: #00ff9d;">Console Output</div>${consoleElement.innerHTML}`;
+                        
+                        contentDiv.appendChild(consoleDiv);
+                    }
+                    
+                    fullscreenContent.appendChild(contentDiv);
+                    fullscreenTitle.textContent = 'JavaScript Output - Fullscreen Mode';
+                } else {
+                    // For Python output
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'fullscreen-div';
+                    const pythonOutput = document.getElementById('python-output');
+                    contentDiv.innerHTML = pythonOutput.innerHTML;
+                    fullscreenContent.appendChild(contentDiv);
+                    fullscreenTitle.textContent = 'Python Output - Fullscreen Mode';
+                }
+                
+                // Show the fullscreen overlay
+                fullscreenOverlay.classList.add('active');
+            });
+
+            // New tab functionality
+            newtabBtn.addEventListener('click', function() {
+                if (type === 'web') {
+                    // For web content, open in new tab
+                    const html = document.getElementById('html-code').value;
+                    const css = `<style>${document.getElementById('css-code').value}</style>`;
+                    const js = `<script>${document.getElementById('web-js-code').value}<\/script>`;
+                    
+                    const fullHtml = `<!DOCTYPE html><html>${html}${css}${js}</html>`;
+                    const newWindow = window.open();
+                    newWindow.document.write(fullHtml);
+                    newWindow.document.close();
+                } else if (type === 'js') {
+                    // For JavaScript output
+                    const jsOutput = document.getElementById('js-output').innerHTML;
+                    const consoleOutput = document.getElementById('js-console-output').innerHTML;
+                    
+                    const content = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>JavaScript Output</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                                .output { background: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+                                .console { background: #1e1e1e; color: white; padding: 15px; border-radius: 5px; font-family: monospace; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>JavaScript Output</h1>
+                            <div class="output">${jsOutput}</div>
+                            ${consoleOutput ? `<div class="console"><h3>Console:</h3>${consoleOutput}</div>` : ''}
+                        </body>
+                        </html>
+                    `;
+                    
+                    const newWindow = window.open();
+                    newWindow.document.write(content);
+                    newWindow.document.close();
+                } else {
+                    // For Python output
+                    const pythonOutput = document.getElementById('python-output').innerHTML;
+                    
+                    const content = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Python Output</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                                .output { background: white; padding: 20px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>Python Output</h1>
+                            <div class="output">${pythonOutput}</div>
+                        </body>
+                        </html>
+                    `;
+                    
+                    const newWindow = window.open();
+                    newWindow.document.write(content);
+                    newWindow.document.close();
+                }
+            });
+
+            // Exit fullscreen
+            exitFullscreenBtn.addEventListener('click', function() {
+                fullscreenOverlay.classList.remove('active');
+            });
+        }
     </script>
 </body>
 </html>
