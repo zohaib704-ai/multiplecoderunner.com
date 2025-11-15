@@ -662,6 +662,24 @@
                 justify-content: center;
             }
         }
+        /* Navigation Styles */
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-2px);
+}
+
+.nav-link.active {
+    background: var(--primary) !important;
+    box-shadow: 0 4px 15px rgba(74, 0, 224, 0.4);
+}
+
+.page-content {
+    transition: all 0.3s ease;
+}
+        /* Main content visibility for page system */
+.main-container > *:not(header):not(#pages-container) {
+    transition: opacity 0.3s ease;
+}
     </style>
     
 <!-- Structured Data -->
@@ -719,7 +737,22 @@
     </div>
 
     <div class="main-container">
-             <header>
+         <header>
+    <nav style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+        <a href="#home" class="nav-link active" data-page="home" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.1); border-radius: 8px; transition: all 0.3s ease;">
+            <i class="fas fa-home"></i> Home
+        </a>
+        <a href="#about" class="nav-link" data-page="about" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.1); border-radius: 8px; transition: all 0.3s ease;">
+            <i class="fas fa-info-circle"></i> About
+        </a>
+        <a href="#privacy" class="nav-link" data-page="privacy" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.1); border-radius: 8px; transition: all 0.3s ease;">
+            <i class="fas fa-shield-alt"></i> Privacy Policy
+        </a>
+        <a href="#contact" class="nav-link" data-page="contact" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.1); border-radius: 8px; transition: all 0.3s ease;">
+            <i class="fas fa-envelope"></i> Contact
+        </a>
+    </nav>
+    
     <h1>Online Code Editor - Run JavaScript, Python, HTML/CSS in Browser</h1>
     <p class="subtitle">Free online code compiler and sandbox. Execute JavaScript code, run Python online, test HTML/CSS/JS with live preview. No installation required.</p>
 </header>
@@ -1077,7 +1110,150 @@ print(f"Courses: {', '.join(student['courses'])}")</textarea>
             <h3 style="color: #00b09b; margin-bottom: 10px;">🌍 Accessible Worldwide</h3>
             <p style="opacity: 0.9;">Free online code editor available globally. No restrictions based on location. Perfect for learners and developers everywhere.</p>
         </section>
+<!-- Additional Pages Content -->
+<div id="pages-container">
+    <!-- About Page -->
+    <div id="about-page" class="page-content hidden">
+        <section class="seo-section">
+            <h1 style="color: #00b09b; text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-info-circle"></i> About Code Runner Pro
+            </h1>
+            
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">🎯 Our Mission</h3>
+                <p style="line-height: 1.6; margin-bottom: 15px;">
+                    Code Runner Pro was created to provide developers, students, and coding enthusiasts with a free, accessible platform to write, test, and execute code directly in their browsers. We believe that learning to code should be barrier-free and available to everyone.
+                </p>
+            </div>
 
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">🚀 What We Offer</h3>
+                <ul style="line-height: 1.6; padding-left: 20px;">
+                    <li style="margin-bottom: 10px;"><strong>JavaScript Execution:</strong> Run JavaScript code with real-time console output</li>
+                    <li style="margin-bottom: 10px;"><strong>Python Simulation:</strong> Execute Python code directly in your browser</li>
+                    <li style="margin-bottom: 10px;"><strong>Web Development Playground:</strong> Live HTML/CSS/JavaScript preview</li>
+                    <li style="margin-bottom: 10px;"><strong>No Installation Required:</strong> Start coding immediately</li>
+                    <li style="margin-bottom: 10px;"><strong>Completely Free:</strong> No hidden costs or subscriptions</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">👨‍💻 For Everyone</h3>
+                <p style="line-height: 1.6;">
+                    Whether you're a beginner learning your first programming language, a student working on assignments, or a professional testing quick code snippets, Code Runner Pro is designed to make your coding journey smoother and more accessible.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Privacy Policy Page -->
+    <div id="privacy-page" class="page-content hidden">
+        <section class="seo-section">
+            <h1 style="color: #00b09b; text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-shield-alt"></i> Privacy Policy
+            </h1>
+            
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">📝 Last Updated: January 2024</h3>
+                <p style="line-height: 1.6;">
+                    At Code Runner Pro, we take your privacy seriously. This Privacy Policy explains how we handle your information when you use our online code editor.
+                </p>
+            </div>
+
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">🔒 Information We Collect</h3>
+                <p style="line-height: 1.6; margin-bottom: 10px;">
+                    <strong>Code You Write:</strong> All code execution happens locally in your browser. We do not store, save, or transmit any code you write in our editor to our servers.
+                </p>
+                <p style="line-height: 1.6; margin-bottom: 10px;">
+                    <strong>Automatically Collected Information:</strong> Like most websites, we may collect anonymous usage data through services like Google Analytics to improve our service. This includes:
+                </p>
+                <ul style="line-height: 1.6; padding-left: 20px;">
+                    <li>Browser type and version</li>
+                    <li>Pages visited and time spent</li>
+                    <li>General geographic location (country-level)</li>
+                    <li>Referring website</li>
+                </ul>
+            </div>
+
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">🍪 Cookies</h3>
+                <p style="line-height: 1.6;">
+                    We use cookies only for essential functionality and analytics. You can disable cookies in your browser settings, but this may affect website functionality.
+                </p>
+            </div>
+
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">📊 Third-Party Services</h3>
+                <p style="line-height: 1.6; margin-bottom: 10px;">
+                    We use the following third-party services:
+                </p>
+                <ul style="line-height: 1.6; padding-left: 20px;">
+                    <li><strong>Google Analytics:</strong> For website traffic analysis</li>
+                    <li><strong>Google AdSense:</strong> For displaying relevant advertisements</li>
+                    <li><strong>Font Awesome:</strong> For icons and UI elements</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3 style="color: #4a00e0; margin-bottom: 15px;">📞 Contact Us</h3>
+                <p style="line-height: 1.6;">
+                    If you have any questions about this Privacy Policy, please contact us through our contact page.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Contact Page -->
+    <div id="contact-page" class="page-content hidden">
+        <section class="seo-section">
+            <h1 style="color: #00b09b; text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-envelope"></i> Contact Us
+            </h1>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3 style="color: #4a00e0; margin-bottom: 15px;">💬 Get In Touch</h3>
+                    <p style="line-height: 1.6; margin-bottom: 15px;">
+                        We'd love to hear from you! Whether you have questions, suggestions, or found a bug, please don't hesitate to reach out.
+                    </p>
+                    
+                    <div style="margin-top: 20px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                            <i class="fas fa-envelope" style="color: #00b09b; margin-right: 10px; width: 20px;"></i>
+                            <span>Email: contact@multiplecoderunnercom.netlify.app</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                            <i class="fas fa-bug" style="color: #00b09b; margin-right: 10px; width: 20px;"></i>
+                            <span>Report bugs and issues</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-lightbulb" style="color: #00b09b; margin-right: 10px; width: 20px;"></i>
+                            <span>Feature requests and suggestions</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <h3 style="color: #4a00e0; margin-bottom: 15px;">🚀 Support Our Work</h3>
+                    <p style="line-height: 1.6; margin-bottom: 15px;">
+                        Code Runner Pro is completely free to use. If you find it helpful, consider supporting us to help cover maintenance costs and continue development.
+                    </p>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="https://buymeacoffee.com/yourusername" target="_blank" 
+                           style="display: inline-block; background: #FFDD00; color: #000; padding: 12px 24px; 
+                                  border-radius: 8px; text-decoration: none; font-weight: bold; margin: 10px;">
+                           ☕ Buy Me a Coffee
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
     <footer>
         <p>Code Runner Pro &copy; 2023 | Run JavaScript, HTML/CSS/JS, and Python code in real-time</p>
         <p><small>Note: Python execution is simulated in the browser. For full Python support, a backend server would be required.</small></p>
@@ -1611,6 +1787,64 @@ if len(fib_sequence) > 2:
                 fullscreenOverlay.classList.remove('active');
             });
         }
+        // Page Navigation System
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.nav-link');
+    const pageContents = document.querySelectorAll('.page-content');
+    const mainContent = document.querySelector('.main-container > *:not(header):not(#pages-container)');
+
+    // Function to show a specific page
+    function showPage(pageId) {
+        // Hide all page contents
+        pageContents.forEach(page => page.classList.add('hidden'));
+        
+        // Show/hide main content
+        if (mainContent) {
+            mainContent.style.display = pageId === 'home' ? 'block' : 'none';
+        }
+        
+        // Show selected page if not home
+        if (pageId !== 'home') {
+            const targetPage = document.getElementById(`${pageId}-page`);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+        }
+        
+        // Update active nav link
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('data-page') === pageId) {
+                link.classList.add('active');
+            }
+        });
+        
+        // Update URL hash
+        window.location.hash = pageId;
+    }
+
+    // Add click events to nav links
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageId = this.getAttribute('data-page');
+            showPage(pageId);
+        });
+    });
+
+    // Check URL hash on page load
+    function checkInitialPage() {
+        const hash = window.location.hash.replace('#', '');
+        if (hash && ['about', 'privacy', 'contact'].includes(hash)) {
+            showPage(hash);
+        } else {
+            showPage('home');
+        }
+    }
+
+    // Initialize page
+    checkInitialPage();
+});
     </script>
 </body>
 </html>
